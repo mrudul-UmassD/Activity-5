@@ -1,36 +1,32 @@
-# Naming workflow helps understanding what it does
-name: Test and Deploy Workflow
+name: Node.js CI
 
-# “on” command is where you can mention what triggers a workflow
 on:
-  push: # Trigger the workflow on all push events
-# Run the workflow only on the main branch
-    branches: [ main ] 
-  pull_request: # Trigger the workflow on pull request events
-# Run the workflow only on pull requests targeting the main branch
-    branches: [ main ] 
-# When the workflow is triggered, some jobs can be automated:
+  push:
+    branches: [main]  # Trigger on pushes to the main branch
+  pull_request:
+    branches: [main]  # Also trigger on pull requests targeting main
+
 jobs:
-  build_and_test:
-    name: Build and Test # The name to show up in GitHub logs
-    # Similar to Docker, we Specify the operating system for the job
-    runs-on: ubuntu-latest # Here the OS is the latest Ubuntu
+  build:
+    runs-on: ubuntu-latest
 
-    # in the following steps, first the code from GitHub repo is fetched
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]  # Test on multiple Node.js versions
+
     steps:
-      - name: Checkout Repository # Arbitrary name
-# Checkout action fetches the repository code (GitHub built-in)
-        uses: actions/checkout@v2 
-      - name: Set up Node.js # The name to show up in GitHub logs
+      - uses: actions/checkout@v3
 
-# Setup-node action sets up a Node.js on the action (GitHub built-in)
-        uses: actions/setup-node@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
         with:
-          node-version: '14' # Specify the Node.js version
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install Dependencies # Install project dependencies
-        run: npm install # Run the npm install command to install dependencies
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Run Tests # Run automated tests
-        run: npm test # Run the npm test command to execute tests
+      - name: Run tests
+        run: npm test  # Assumes your test script is called 'test' in package.json
 
+      - name: Run index.js (optional)
+        run: node index.js  # If you want to run your application after tests
